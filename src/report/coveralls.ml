@@ -301,26 +301,23 @@ let output_and_send
 
   let repo_token =
     repo_token |> or_default begin fun () ->
-      if Coverage_service.needs_repo_token (Lazy.force ci) service then begin
-        let repo_token_variables =
-          Coverage_service.repo_token_variables service in
-        let rec try_variables = function
-          | variable::more ->
-            begin match Sys.getenv variable with
-            | exception Not_found ->
-              try_variables more
-            | value ->
-              Util.info "using repo token variable $%s" variable;
-              value
-            end
-          | [] ->
-            Util.fatal
-              "expected repo token in $%s" (List.hd repo_token_variables)
-        in
-        try_variables repo_token_variables
-      end
-      else
-        ""
+      let repo_token_variables = Coverage_service.repo_token_variables service in
+      let rec try_variables = function
+        | variable::more ->
+          begin match Sys.getenv variable with
+          | exception Not_found ->
+            try_variables more
+          | value ->
+            Util.info "using repo token variable $%s" variable;
+            value
+          end
+        | [] -> ""
+      in
+      let token = try_variables repo_token_variables in
+      if token = "" && Coverage_service.needs_repo_token (Lazy.force ci) service then begin
+        Util.fatal "expected repo token in $%s" (List.hd repo_token_variables)
+      end;
+      token
     end
   in
 
