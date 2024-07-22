@@ -308,7 +308,7 @@ let output_and_send
           | exception Not_found ->
             try_variables more
           | value ->
-            Util.info "using repo token variable $%s" variable;
+            Util.info "using repo token variable $%s (%#i)" variable (String.length value) ;
             value
           end
         | [] -> ""
